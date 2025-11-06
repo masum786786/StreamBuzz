@@ -1,91 +1,91 @@
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import CloudinaryUploader from "./CloudinaryUploader";
 
 export default function VideoGallery() {
-  const videos = Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    title: `🎬 Amazing Video ${i + 1}`,
-    src: `/videos/JMI.mp4`, // your local video file
-  }));
+  const [videos, setVideos] = useState([]);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const videosPerPage = 10;
+  // Fetch initial videos
+  useEffect(() => {
+    loadVideos();
+  }, []);
 
-  const totalPages = Math.ceil(videos.length / videosPerPage);
-  const startIndex = (currentPage - 1) * videosPerPage;
-  const currentVideos = videos.slice(startIndex, startIndex + videosPerPage);
+  const loadVideos = async (cursor = null) => {
+    setLoading(true);
+    try {
+      const url = cursor ? `/api/getVideos?nextCursor=${cursor}` : "/api/getVideos";
+      const res = await fetch(url, { cache: "no-store" });
+      const data = await res.json();
 
-  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-  const handleNext = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+      const formattedVideos = (data.resources || []).map((v) => ({
+        public_id: v.public_id,
+        secure_url: v.secure_url.replace("/upload/", "/upload/f_auto/"),
+      }));
+
+      setVideos((prev) => [...prev, ...formattedVideos]);
+      setNextCursor(data.next_cursor || null);
+    } catch (err) {
+      console.error("❌ Error fetching videos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle newly uploaded video
+  const handleUpload = (video) => {
+    setVideos((prev) => [video, ...prev]);
+  };
 
   return (
-    <main className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-extrabold mb-10 text-center bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-transparent bg-clip-text">
-        🌟 My Video Gallery 🌟
-      </h1>
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* Upload Button */}
+      <div className="mb-6 flex justify-center">
+        <CloudinaryUploader onUpload={handleUpload} />
+      </div>
+
+      {/* Total videos */}
+      <p className="text-center text-gray-600 mb-4">
+        Total videos: {videos.length}
+      </p>
 
       {/* Video Grid */}
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-        {currentVideos.map((video) => (
-          <div
-            key={video.id}
-            className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-all duration-300"
-          >
-            {/* Video */}
-            {/* Video */}
-            <video
-              width="100%"
-              height="250"
-              controls
-              preload="metadata"
-              className="rounded-t-2xl"
-              poster={`/thumbnails/img${(video.id % 1) + 1}.jpg`}
+      {videos.length === 0 ? (
+        <p className="text-center text-gray-500">No videos yet — upload one 🎬</p>
+      ) : (
+        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+          {videos.map((video) => (
+            <div
+              key={video.public_id}
+              className="shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300"
             >
-              <source src={video.src} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-
-
-            {/* Title */}
-            <div className="p-4 text-center">
-              <h2 className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors duration-300">
-                {video.title}
-              </h2>
+              <video
+                width="100%"
+                height="250"
+                controls
+                className="rounded-t-lg"
+              >
+                <source src={video.secure_url} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Pagination */}
-      <div className="flex justify-center items-center mt-10 space-x-4">
-        <button
-          onClick={handlePrev}
-          disabled={currentPage === 1}
-          className={`px-5 py-2.5 rounded-lg font-semibold ${currentPage === 1
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700 transition-all"
-            }`}
-        >
-          ⬅ Previous
-        </button>
-
-        <span className="text-lg text-gray-700 font-medium">
-          Page {currentPage} of {totalPages}
-        </span>
-
-        <button
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-          className={`px-5 py-2.5 rounded-lg font-semibold ${currentPage === totalPages
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700 transition-all"
-            }`}
-        >
-          Next ➡
-        </button>
-      </div>
-    </main>
+      {/* Load More Button */}
+      {nextCursor && (
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => loadVideos(nextCursor)}
+            disabled={loading}
+            className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-all"
+          >
+            {loading ? "Loading..." : "Load More"}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

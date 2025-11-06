@@ -1,17 +1,23 @@
 "use client";
-import VideoGallery from './components/VideoGallery'
-// import Navbar from './components/Navbar'
+import Dashboard from './components/Dashboard'
+import AllContent from './components/AllContent'
+import UserVideos from './user-videos/page'
 
 
-export function Video() {
+
+
+export function app() {
   return (
-    
 
-      <div>
-        {/* <Navbar/> */}
-        <VideoGallery/>
+
+    <div className="min-h-screen flex flex-col">
+      {/* <Dashboard /> */}
+      <div className="flex-1 overflow-auto">
+        {/* <AllContent /> */}
+        <UserVideos/>
       </div>
+    </div>
   );
 }
 
-export default Video;
+export default app;
