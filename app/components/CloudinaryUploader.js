@@ -21,17 +21,33 @@ export default function CloudinaryUploader({ onUpload }) {
         resourceType: "video",
         folder: "my_videos",
         clientAllowedFormats: ["mp4", "webm", "mov"],
-        maxFileSize: 500000000,
+        maxFileSize: 500000000, // 500MB
         tags: ["my_videos"],
       },
       (error, result) => {
         if (error) return console.error("Cloudinary upload error:", error);
+
         if (result.event === "success") {
+          // ✅ Define video URL correctly
+          const videoUrl = result.info.secure_url.replace(
+            "/upload/",
+            "/upload/f_auto/"
+          );
+
+          // ✅ Generate thumbnail using Cloudinary transformations
+          const thumbnailUrl = result.info.secure_url.replace(
+            "/upload/",
+            "/upload/so_2,f_jpg,w_400,h_250,c_fill/"
+          );
+
+          // ✅ Send both back to parent
           onUpload({
             public_id: result.info.public_id,
-            secure_url: result.info.secure_url.replace("/upload/", "/upload/f_auto/"),
+            secure_url: videoUrl,
+            thumbnail_url: thumbnailUrl,
           });
-          console.log("✅ Video uploaded:", result.info.secure_url);
+
+          console.log("✅ Video uploaded:", videoUrl);
         }
       }
     );

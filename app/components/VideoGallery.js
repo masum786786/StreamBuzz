@@ -55,9 +55,9 @@ export default function VideoGallery() {
         <p className="text-center text-gray-500">No videos yet — upload one 🎬</p>
       ) : (
         <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-          {videos.map((video) => (
+          {videos.map((video, index) => (
             <div
-              key={video.public_id}
+              key={`${video.public_id}-${index}`} // ✅ Ensures unique key
               className="shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300"
             >
               <video
@@ -71,6 +71,7 @@ export default function VideoGallery() {
               </video>
             </div>
           ))}
+
         </div>
       )}
 

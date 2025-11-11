@@ -5,6 +5,7 @@ export default function UserVideos() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeVideo, setActiveVideo] = useState(null);
   const videosPerPage = 10;
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function UserVideos() {
         const formatted = data.resources.map(v => ({
           public_id: v.public_id,
           secure_url: v.secure_url,
+          thumbnail_url: v.thumbnail_url, // ✅ from backend
         }));
 
         console.log("✅ Videos to show:", formatted);
@@ -51,7 +53,6 @@ export default function UserVideos() {
     );
   }
 
-  // Main UI
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-center">All Videos</h1>
@@ -65,18 +66,37 @@ export default function UserVideos() {
             {currentVideos.map(video => (
               <div
                 key={video.public_id}
-                className="shadow-lg rounded-lg overflow-hidden bg-black"
+                className="relative shadow-lg rounded-lg overflow-hidden group  cursor-pointer"
+                onClick={() => setActiveVideo(video.public_id)}
               >
-                {/* Fixed box with contained video (no stretching) */}
-                <div className="h-56 w-full flex items-center justify-center bg-black">
+                {/* Thumbnail */}
+                {activeVideo === video.public_id ? (
                   <video
                     controls
+                    autoPlay
                     src={video.secure_url}
-                    className="max-h-full max-w-full object-contain"
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
+                    className="w-full h-56 object-contain "
+                  />
+                ) : (
+                  <>
+                    <img
+                      src={video.thumbnail_url}
+                      alt="Video thumbnail"
+                      className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {/* Play icon overlay */}
+                    <div className="absolute inset-0 flex justify-center items-center  bg-opacity-40 opacity-0 group-hover:opacity-100 transition-all">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-16 h-16 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
